@@ -103,6 +103,7 @@
           <td>{{ formatDate(user.createdAt) }}</td>
           <td>
             <button @click="editUser(user)" class="edit-btn">编辑</button>
+            <button @click="showRechargeDialog(user)" class="recharge-btn">充值</button>
             <button @click="deleteUser(user.id)" class="delete-btn">删除</button>
           </td>
         </tr>
@@ -136,6 +137,27 @@
       >
         末页
       </button>
+    </div>
+    
+    <!-- 充值对话框 -->
+    <div v-if="showRechargeForm" class="recharge-dialog">
+      <div class="recharge-dialog-content">
+        <h3>充值金币</h3>
+        <div class="form-item">
+          <label>用户：{{ selectedUser.username }}</label>
+        </div>
+        <div class="form-item">
+          <label>当前金币：{{ selectedUser.coins }}</label>
+        </div>
+        <div class="form-item">
+          <label>充值数量</label>
+          <input type="number" v-model="rechargeAmount" min="1" placeholder="请输入充值数量">
+        </div>
+        <div class="form-actions">
+          <button @click="rechargeCoins" class="save-btn">确认充值</button>
+          <button @click="showRechargeForm = false" class="cancel-btn">取消</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -176,7 +198,11 @@ export default {
         qq: '',
         address: '',
         coins: 100
-      }
+      },
+      // 充值相关
+      showRechargeForm: false,
+      selectedUser: {},
+      rechargeAmount: 0
     }
   },
   mounted() {
@@ -265,6 +291,33 @@ export default {
     formatDate(dateString) {
       const date = new Date(dateString)
       return date.toLocaleString()
+    },
+    
+    // 充值相关方法
+    showRechargeDialog(user) {
+      this.selectedUser = user
+      this.rechargeAmount = 0
+      this.showRechargeForm = true
+    },
+    
+    async rechargeCoins() {
+      if (!this.rechargeAmount || this.rechargeAmount <= 0) {
+        alert('请输入有效的充值数量')
+        return
+      }
+      
+      try {
+        const newCoins = this.selectedUser.coins + parseInt(this.rechargeAmount)
+        await axios.put(`/api/users/${this.selectedUser.id}`, {
+          coins: newCoins
+        })
+        alert('充值成功')
+        this.showRechargeForm = false
+        this.fetchUsers()
+      } catch (error) {
+        console.error('充值失败:', error)
+        alert('充值失败，请重试')
+      }
     }
   }
 }
@@ -426,6 +479,51 @@ export default {
 
 .delete-btn:hover {
   background-color: #c82333;
+}
+
+.recharge-btn {
+  background-color: #ffc107;
+  color: #212529;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 5px;
+  font-size: 12px;
+}
+
+.recharge-btn:hover {
+  background-color: #e0a800;
+}
+
+/* 充值对话框样式 */
+.recharge-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.recharge-dialog-content {
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.recharge-dialog-content h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+  text-align: center;
 }
 
 /* 工具栏样式 */
