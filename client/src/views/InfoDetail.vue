@@ -274,7 +274,7 @@
         <h2 class="section-title">您可能感兴趣</h2>
         <div class="recommend-grid">
           <div 
-            v-for="item in recommendItems" 
+            v-for="(item, index) in recommendItems.slice(0, 3)" 
             :key="item.id"
             class="recommend-item"
           >
@@ -287,9 +287,6 @@
               </div>
             </router-link>
           </div>
-        </div>
-        <div class="more-btn">
-          <button>查看更多</button>
         </div>
       </div>
       

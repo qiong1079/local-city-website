@@ -621,6 +621,8 @@
 </template>
 
 <script>
+import { useUserStore } from '../stores/userStore'
+
 export default {
   name: 'Post',
   data() {
@@ -667,7 +669,14 @@ export default {
   computed: {
     selectedCategory() {
       return this.categories.find(cat => cat.id === this.selectedCategoryId);
+    },
+    user() {
+      return this.userStore.user
     }
+  },
+  setup() {
+    const userStore = useUserStore()
+    return { userStore }
   },
   mounted() {
     // 检查用户是否登录
@@ -699,8 +708,8 @@ export default {
   },
   methods: {
     checkLoginStatus() {
-      const userInfo = localStorage.getItem('user');
-      if (!userInfo) {
+      this.userStore.checkLogin()
+      if (!this.user) {
         alert('请先登录');
         this.$router.push('/login');
         return false;
@@ -884,14 +893,12 @@ export default {
     },
     async loadPostData() {
       try {
-        const userInfo = localStorage.getItem('user');
-        if (!userInfo) {
+        if (!this.user) {
           alert('请先登录');
           this.$router.push('/login');
           return;
         }
         
-        const user = JSON.parse(userInfo);
         const type = this.getSelectedCategoryType();
         
         const response = await fetch(`/api/${type}/${this.postId}`);
@@ -931,36 +938,51 @@ export default {
           return;
         }
         
-        const userInfo = localStorage.getItem('user');
-        const user = JSON.parse(userInfo);
+        // 检查金币余额
+        if (!this.editMode) {
+          await this.userStore.fetchUserCoins()
+          if (this.user.coins < 5) {
+            alert('金币不足，发布信息需要5金币');
+            return;
+          }
+        }
         
         let response;
         if (this.selectedCategoryId === 1) {
           // 房屋租售
-          response = await this.submitHousePost(user);
+          response = await this.submitHousePost();
         } else if (this.selectedCategoryId === 2) {
           // 二手物品
-          response = await this.submitSecondhandPost(user);
+          response = await this.submitSecondhandPost();
         } else if (this.selectedCategoryId === 3) {
           // 车辆买卖
-          response = await this.submitVehiclePost(user);
+          response = await this.submitVehiclePost();
         } else if (this.selectedCategoryId === 4) {
           // 生活服务
-          response = await this.submitServicePost(user);
+          response = await this.submitServicePost();
         }
         
         if (response && response.ok) {
+          // 刷新用户金币余额
+          await this.userStore.fetchUserCoins()
           // 跳转到步骤 4 显示成功消息
           this.currentStep = 4;
         } else {
-          alert('操作失败，请重试');
+          const errorData = await response.json();
+          if (errorData.message === '金币不足') {
+            alert('金币不足，发布信息需要5金币');
+            // 刷新用户金币余额
+            await this.userStore.fetchUserCoins()
+          } else {
+            alert('操作失败，请重试');
+          }
         }
       } catch (error) {
         console.error('提交失败:', error);
         alert('操作失败，请重试');
       }
     },
-    async submitHousePost(user) {
+    async submitHousePost() {
       const postData = {
         title: this.form.title,
         price: this.form.price,
@@ -976,7 +998,7 @@ export default {
         contactPhone: this.form.contact,
         description: this.form.description,
         images: JSON.stringify(this.form.images),
-        userId: user.id
+        userId: this.user.id
       };
       
       console.log('House post data:', postData);
@@ -1002,7 +1024,7 @@ export default {
       
       return response;
     },
-    async submitSecondhandPost(user) {
+    async submitSecondhandPost() {
       const formData = new FormData();
       formData.append('title', this.form.title);
       formData.append('price', this.form.price);
@@ -1015,7 +1037,7 @@ export default {
       formData.append('contactPhone', this.form.contact);
       formData.append('description', this.form.description);
       formData.append('images', JSON.stringify(this.form.images));
-      formData.append('userId', user.id);
+      formData.append('userId', this.user.id);
       
       console.log('Secondhand post data:', formData);
       
@@ -1034,7 +1056,7 @@ export default {
       
       return response;
     },
-    async submitVehiclePost(user) {
+    async submitVehiclePost() {
       const formData = new FormData();
       formData.append('title', this.form.title);
       formData.append('price', this.form.price);
@@ -1051,7 +1073,7 @@ export default {
       formData.append('contactQQ', this.form.contactQQ);
       formData.append('description', this.form.description);
       formData.append('images', JSON.stringify(this.form.images));
-      formData.append('userId', user.id);
+      formData.append('userId', this.user.id);
       
       console.log('Vehicle post data:', formData);
       
@@ -1070,7 +1092,7 @@ export default {
       
       return response;
     },
-    async submitServicePost(user) {
+    async submitServicePost() {
       const formData = new FormData();
       formData.append('title', this.form.title);
       formData.append('price', this.form.price);
@@ -1083,7 +1105,7 @@ export default {
       formData.append('contactQQ', this.form.contactQQ);
       formData.append('description', this.form.description);
       formData.append('images', JSON.stringify(this.form.images));
-      formData.append('userId', user.id);
+      formData.append('userId', this.user.id);
       
       console.log('Service post data:', formData);
       
@@ -1104,7 +1126,7 @@ export default {
     },
     viewMyPosts() {
       // 跳转到用户中心的我的信息页面
-      this.$router.push('/user-center?tab=my-posts');
+      this.$router.push('/usercenter?tab=my-posts');
     },
     continuePosting() {
       // 重置表单，继续发布

@@ -43,7 +43,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { useUserStore } from '../stores/userStore'
 
 export default {
   name: 'Login',
@@ -55,6 +55,10 @@ export default {
         remember: false
       }
     }
+  },
+  setup() {
+    const userStore = useUserStore()
+    return { userStore }
   },
   methods: {
     async login() {
@@ -69,19 +73,9 @@ export default {
       }
       
       try {
-        // 发送登录请求到后端API
-        const response = await axios.post('/api/login/user', {
-          username: this.form.username,
-          password: this.form.password
-        });
-        
-        // 保存用户信息到localStorage
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        
-        // 触发storage事件，通知App组件更新用户信息
-        window.dispatchEvent(new Event('storage'));
-        
-        alert(response.data.message);
+        // 使用userStore登录
+        const response = await this.userStore.login(this.form.username, this.form.password)
+        alert(response.message);
         this.$router.push('/');
       } catch (error) {
         alert(error.response?.data?.message || '登录失败，请重试');

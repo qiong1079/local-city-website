@@ -83,7 +83,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+import { useAdminStore } from '../stores/adminStore'
 import HouseManagement from './admin-components/HouseManagement.vue'
 import SecondhandManagement from './admin-components/SecondhandManagement.vue'
 import VehicleManagement from './admin-components/VehicleManagement.vue'
@@ -109,7 +109,6 @@ export default {
   },
   data() {
     return {
-      isLoggedIn: false,
       loginForm: {
         username: '',
         password: ''
@@ -118,32 +117,30 @@ export default {
       activeTab: 'house'
     }
   },
+  computed: {
+    isLoggedIn() {
+      return this.adminStore.isLoggedIn
+    }
+  },
+  setup() {
+    const adminStore = useAdminStore()
+    return { adminStore }
+  },
   mounted() {
-    this.checkLogin()
+    this.adminStore.checkLogin()
   },
   methods: {
-    async checkLogin() {
-      const token = localStorage.getItem('token')
-      if (token) {
-        this.isLoggedIn = true
-      }
-    },
-    
     async login() {
       try {
-        const response = await axios.post('/api/login', this.loginForm)
-        if (response.data.message === '登录成功') {
-          this.isLoggedIn = true
-          localStorage.setItem('token', 'admin')
-        }
+        await this.adminStore.login(this.loginForm.username, this.loginForm.password)
+        this.loginError = ''
       } catch (error) {
         this.loginError = '用户名或密码错误'
       }
     },
     
     logout() {
-      localStorage.removeItem('token')
-      this.isLoggedIn = false
+      this.adminStore.logout()
     }
   }
 }

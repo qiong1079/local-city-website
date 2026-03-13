@@ -121,11 +121,12 @@
 </template>
 
 <script>
+import { useUserStore } from '../stores/userStore'
+
 export default {
   name: 'CoinRecharge',
   data() {
     return {
-      user: null,
       isMobile: false,
       mobileMenuActive: false,
       selectedOption: 1,
@@ -142,6 +143,9 @@ export default {
     }
   },
   computed: {
+    user() {
+      return this.userStore.user
+    },
     finalAmount() {
       if (this.customAmount) {
         return this.customAmount;
@@ -158,13 +162,16 @@ export default {
       return `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=payment%20QR%20code%2C%20for%20coin%20recharge%2C%20${this.finalAmount}%20yuan&image_size=square`;
     }
   },
+  setup() {
+    const userStore = useUserStore()
+    return { userStore }
+  },
   mounted() {
-    // 检查localStorage是否有用户信息
-    const userInfo = localStorage.getItem('user');
-    if (userInfo) {
-      this.user = JSON.parse(userInfo);
-      // 获取用户真实金币数量
-      this.fetchUserCoins();
+    // 检查登录状态
+    this.userStore.checkLogin()
+    // 获取用户真实金币数量
+    if (this.user) {
+      this.userStore.fetchUserCoins()
     }
     
     // 获取付款二维码
@@ -185,49 +192,8 @@ export default {
       this.mobileMenuActive = !this.mobileMenuActive;
     },
     logout() {
-      // 清除localStorage中的用户信息
-      localStorage.removeItem('user');
-      // 跳转到登录页
-      this.$router.push('/login');
-    },
-    async fetchUserCoins() {
-      try {
-        const userInfo = localStorage.getItem('user');
-        if (!userInfo) {
-          console.log('No user info in localStorage');
-          return;
-        }
-        
-        const user = JSON.parse(userInfo);
-        const userId = user.id;
-        
-        console.log('Fetching user coins for userId:', userId);
-        try {
-          const response = await fetch(`/api/users/${userId}`);
-          console.log('Response status:', response.status);
-          if (response.ok) {
-            const userData = await response.json();
-            console.log('User data received:', userData);
-            // 更新用户信息，包括金币数量
-            this.user = userData;
-            // 更新localStorage
-            localStorage.setItem('user', JSON.stringify(userData));
-            console.log('User coins updated:', userData.coins);
-          } else {
-            console.error('Failed to fetch user data:', response.statusText);
-            // 如果API调用失败，使用localStorage中的数据
-            console.log('Using local user data:', user);
-            this.user = user;
-          }
-        } catch (fetchError) {
-          console.error('Network error when fetching user data:', fetchError);
-          // 网络错误时使用localStorage中的数据
-          console.log('Using local user data due to network error:', user);
-          this.user = user;
-        }
-      } catch (error) {
-        console.error('获取金币数量失败:', error);
-      }
+      this.userStore.logout()
+      this.$router.push('/login')
     },
     selectOption(id) {
       this.selectedOption = id;

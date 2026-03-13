@@ -181,11 +181,12 @@
 </template>
 
 <script>
+import { useUserStore } from '../stores/userStore'
+
 export default {
   name: 'UserCenter',
   data() {
     return {
-      user: null,
       isMobile: false,
       mobileMenuActive: false,
       activeTab: 'info',
@@ -204,6 +205,12 @@ export default {
       }
     }
   },
+  computed: {
+    user() {
+      const userStore = useUserStore()
+      return userStore.userInfo
+    }
+  },
   mounted() {
     // 检查URL参数
     const urlParams = new URLSearchParams(window.location.search);
@@ -212,24 +219,26 @@ export default {
       this.activeTab = tab;
     }
     
-    // 检查localStorage是否有用户信息
-    const userInfo = localStorage.getItem('user');
-    if (userInfo) {
-      this.user = JSON.parse(userInfo);
-      
-      // 初始化用户设置
+    // 使用 Pinia store 检查登录状态
+    const userStore = useUserStore();
+    userStore.checkLogin();
+    
+    // 初始化用户设置
+    if (userStore.userInfo) {
       this.userSettings = {
-        username: this.user.username,
-        email: this.user.email,
+        username: userStore.userInfo.username,
+        email: userStore.userInfo.email,
         password: '',
-        phone: this.user.phone || ''
+        phone: userStore.userInfo.phone || ''
       };
       
       // 获取用户发布的信息
       this.fetchUserPosts();
       
       // 获取用户真实金币数量
-      this.fetchUserCoins();
+      if (userStore.userInfo.id) {
+        userStore.fetchUserCoins(userStore.userInfo.id);
+      }
     }
     
     // 检测屏幕尺寸
@@ -247,18 +256,18 @@ export default {
       this.mobileMenuActive = !this.mobileMenuActive;
     },
     logout() {
-      // 清除localStorage中的用户信息
-      localStorage.removeItem('user');
+      // 使用 Pinia store 处理登出
+      const userStore = useUserStore();
+      userStore.logout();
       // 跳转到登录页
       this.$router.push('/login');
     },
     async fetchUserPosts() {
       try {
-        const userInfo = localStorage.getItem('user');
-        if (!userInfo) return;
+        const userStore = useUserStore();
+        if (!userStore.userInfo) return;
         
-        const user = JSON.parse(userInfo);
-        const userId = user.id;
+        const userId = userStore.userInfo.id;
         
         // 同时获取所有类型的用户发布信息
         const [houses, secondhand, vehicles, services] = await Promise.all([
@@ -276,15 +285,13 @@ export default {
         // 计算发布信息总数
         const totalPosts = houses.length + secondhand.length + vehicles.length + services.length;
         // 更新用户对象中的posts属性
-        if (this.user) {
-          this.user.posts = totalPosts;
+        if (userStore.userInfo) {
           // 更新localStorage
-          const userInfo = localStorage.getItem('user');
-          if (userInfo) {
-            const userData = JSON.parse(userInfo);
-            userData.posts = totalPosts;
-            localStorage.setItem('user', JSON.stringify(userData));
-          }
+          const userData = { ...userStore.userInfo };
+          userData.posts = totalPosts;
+          localStorage.setItem('user', JSON.stringify(userData));
+          // 更新 Pinia store
+          userStore.userInfo = userData;
         }
         console.log('Total posts:', totalPosts);
       } catch (error) {
@@ -332,11 +339,10 @@ export default {
     },
     async saveSettings() {
       try {
-        const userInfo = localStorage.getItem('user');
-        if (!userInfo) return;
+        const userStore = useUserStore();
+        if (!userStore.userInfo) return;
         
-        const user = JSON.parse(userInfo);
-        const userId = user.id;
+        const userId = userStore.userInfo.id;
         
         const response = await fetch(`/api/users/${userId}`, {
           method: 'PUT',
@@ -350,7 +356,8 @@ export default {
           // 更新localStorage中的用户信息
           const updatedUser = await response.json();
           localStorage.setItem('user', JSON.stringify(updatedUser));
-          this.user = updatedUser;
+          // 更新 Pinia store
+          userStore.userInfo = updatedUser;
           alert('设置保存成功');
         }
       } catch (error) {

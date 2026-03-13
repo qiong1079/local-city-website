@@ -91,11 +91,12 @@
 </template>
 
 <script>
+import { useUserStore } from './stores/userStore'
+
 export default {
   name: 'App',
   data() {
     return {
-      user: null,
       mobileMenuActive: false,
       contactInfo: {
         phone: '1234567890',
@@ -114,23 +115,27 @@ export default {
     isAdminPage() {
       // 检查当前是否为管理页面
       return this.$route.path.startsWith('/admin');
+    },
+    user() {
+      return this.userStore.user
     }
   },
+  setup() {
+    const userStore = useUserStore()
+    return { userStore }
+  },
   mounted() {
-    // 检查localStorage是否有用户信息
-    this.checkUserInfo();
+    // 检查登录状态
+    this.userStore.checkLogin();
     
     // 获取联系方式
     this.fetchContactInfo();
     // 获取网站信息
     this.fetchSiteInfo();
     
-    // 监听localStorage变化
-    window.addEventListener('storage', this.handleStorageChange);
-    
     // 监听路由变化，确保在登录成功后更新用户信息
     this.$router.beforeEach((to, from, next) => {
-      this.checkUserInfo();
+      this.userStore.checkLogin();
       // 设置页面标题
       this.setPageTitle(to);
       // 每次路由变化时重新获取联系方式和网站信息，确保数据最新
@@ -139,30 +144,10 @@ export default {
       next();
     });
   },
-  beforeUnmount() {
-    window.removeEventListener('storage', this.handleStorageChange);
-  },
   methods: {
-    checkUserInfo() {
-      // 检查localStorage是否有用户信息
-      const userInfo = localStorage.getItem('user');
-      if (userInfo) {
-        this.user = JSON.parse(userInfo);
-      } else {
-        this.user = null;
-      }
-    },
-    handleStorageChange(event) {
-      // 当localStorage中的user信息变化时更新
-      if (event.key === 'user') {
-        this.checkUserInfo();
-      }
-    },
     logout() {
-      // 清除localStorage中的用户信息
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      this.user = null;
+      // 使用userStore登出
+      this.userStore.logout();
       // 跳转到首页
       this.$router.push('/');
     },
