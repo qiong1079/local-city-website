@@ -61,6 +61,10 @@
             <textarea v-model="secondhandForm.description" rows="4"></textarea>
           </div>
           <div class="form-item">
+            <label>发布时间</label>
+            <input type="datetime-local" v-model="secondhandForm.createdAt">
+          </div>
+          <div class="form-item">
             <label>图片</label>
             <div class="image-upload">
               <div 
@@ -106,6 +110,7 @@
           <th>品牌</th>
           <th>新旧程度</th>
           <th>联系电话</th>
+          <th>发布时间</th>
           <th>操作</th>
         </tr>
       </thead>
@@ -117,6 +122,7 @@
           <td>{{ item.brand }}</td>
           <td>{{ item.condition }}</td>
           <td>{{ item.contactPhone }}</td>
+          <td>{{ item.createdAt ? new Date(item.createdAt).toLocaleString() : '' }}</td>
           <td>
             <button @click="editSecondhand(item)" class="edit-btn">编辑</button>
             <button @click="deleteSecondhand(item.id)" class="delete-btn">删除</button>
@@ -253,6 +259,7 @@ export default {
       formData.append('contactPhone', this.secondhandForm.contactPhone)
       formData.append('description', this.secondhandForm.description)
       formData.append('images', JSON.stringify(this.secondhandForm.images))
+      formData.append('createdAt', this.secondhandForm.createdAt)
       formData.append('admin', 'true')
       formData.append('userId', '1')
       
@@ -305,6 +312,11 @@ export default {
         this.secondhandForm.images = typeof item.images === 'string' ? JSON.parse(item.images) : item.images
       } else {
         this.secondhandForm.images = []
+      }
+      // 处理日期时间格式，转换为datetime-local格式
+      if (item.createdAt) {
+        const date = new Date(item.createdAt)
+        this.secondhandForm.createdAt = date.toISOString().slice(0, 16)
       }
       this.showAddForm = true
     },

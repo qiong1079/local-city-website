@@ -295,8 +295,11 @@ async function initDatabase(): Promise<boolean> {
       },
       createdAt: {
         type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW
+        defaultValue: DataTypes.NOW,
+        allowNull: true
       }
+    }, {
+      timestamps: false
     });
     
     global.Secondhand = global.sequelize.define('Secondhand', {
@@ -324,8 +327,11 @@ async function initDatabase(): Promise<boolean> {
       },
       createdAt: {
         type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW
+        defaultValue: DataTypes.NOW,
+        allowNull: true
       }
+    }, {
+      timestamps: false
     });
     
     global.Vehicle = global.sequelize.define('Vehicle', {
@@ -357,8 +363,11 @@ async function initDatabase(): Promise<boolean> {
       },
       createdAt: {
         type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW
+        defaultValue: DataTypes.NOW,
+        allowNull: true
       }
+    }, {
+      timestamps: false
     });
     
     global.Service = global.sequelize.define('Service', {
@@ -387,8 +396,11 @@ async function initDatabase(): Promise<boolean> {
       },
       createdAt: {
         type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW
+        defaultValue: DataTypes.NOW,
+        allowNull: true
       }
+    }, {
+      timestamps: false
     });
     
     global.Admin = global.sequelize.define('Admin', {
@@ -429,7 +441,8 @@ async function initDatabase(): Promise<boolean> {
       },
       createdAt: {
         type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW
+        defaultValue: DataTypes.NOW,
+        allowNull: true
       }
     });
     
@@ -452,7 +465,8 @@ async function initDatabase(): Promise<boolean> {
       icpUrl: DataTypes.STRING, // ICP备案号链接
       createdAt: {
         type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW
+        defaultValue: DataTypes.NOW,
+        allowNull: true
       },
       updatedAt: {
         type: DataTypes.DATE,
@@ -640,7 +654,7 @@ app.delete('/api/houses/:id', async (req: Request, res: Response) => {
   }
 });
 
-app.put('/api/houses/:id', async (req: Request, res: Response) => {
+app.put('/api/houses/:id', upload.none(), async (req: Request, res: Response) => {
   try {
     const house = await global.House.findByPk(req.params.id);
     if (req.body.title) house.title = req.body.title;
@@ -660,6 +674,7 @@ app.put('/api/houses/:id', async (req: Request, res: Response) => {
     if (req.body.admin === 'true') house.status = 'approved'; // 管理员更新的内容直接通过审核
     if (req.file) house.image = req.file.filename;
     if (req.body.images) house.images = req.body.images;
+    if (req.body.createdAt) house.createdAt = new Date(req.body.createdAt);
     const updatedHouse = await house.save();
     res.json(updatedHouse);
   } catch (err) {
@@ -788,6 +803,7 @@ app.put('/api/secondhand/:id', upload.none(), async (req: Request, res: Response
     if (req.body.admin === 'true') item.status = 'approved'; // 管理员更新的内容直接通过审核
     if (req.file) item.image = req.file.filename;
     if (req.body.images) item.images = req.body.images;
+    if (req.body.createdAt) item.createdAt = new Date(req.body.createdAt);
     const updatedItem = await item.save();
     res.json(updatedItem);
   } catch (err) {
@@ -924,6 +940,7 @@ app.put('/api/vehicles/:id', upload.none(), async (req: Request, res: Response) 
     if (req.body.contactPerson) vehicle.contactPerson = req.body.contactPerson;
     if (req.body.contactPhone) vehicle.contactPhone = req.body.contactPhone;
     if (req.body.contactQQ) vehicle.contactQQ = req.body.contactQQ;
+    if (req.body.createdAt) vehicle.createdAt = new Date(req.body.createdAt);
     const updatedVehicle = await vehicle.save();
     res.json(updatedVehicle);
   } catch (err) {
@@ -1054,6 +1071,7 @@ app.put('/api/services/:id', upload.none(), async (req: Request, res: Response) 
     if (req.body.admin === 'true') service.status = 'approved'; // 管理员更新的内容直接通过审核
     if (req.file) service.image = req.file.filename;
     if (req.body.images) service.images = req.body.images;
+    if (req.body.createdAt) service.createdAt = new Date(req.body.createdAt);
     const updatedService = await service.save();
     res.json(updatedService);
   } catch (err) {

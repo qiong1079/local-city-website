@@ -77,6 +77,10 @@
             <textarea v-model="vehicleForm.description" rows="4"></textarea>
           </div>
           <div class="form-item">
+            <label>发布时间</label>
+            <input type="datetime-local" v-model="vehicleForm.createdAt">
+          </div>
+          <div class="form-item">
             <label>图片</label>
             <div class="image-upload">
               <div 
@@ -123,6 +127,7 @@
           <th>年份</th>
           <th>行驶里程</th>
           <th>联系电话</th>
+          <th>发布时间</th>
           <th>操作</th>
         </tr>
       </thead>
@@ -135,6 +140,7 @@
           <td>{{ vehicle.year }}</td>
           <td>{{ vehicle.mileage }}</td>
           <td>{{ vehicle.contactPhone }}</td>
+          <td>{{ vehicle.createdAt ? new Date(vehicle.createdAt).toLocaleString() : '' }}</td>
           <td>
             <button @click="editVehicle(vehicle)" class="edit-btn">编辑</button>
             <button @click="deleteVehicle(vehicle.id)" class="delete-btn">删除</button>
@@ -279,6 +285,7 @@ export default {
       formData.append('contactPhone', this.vehicleForm.contactPhone)
       formData.append('contactQQ', this.vehicleForm.contactQQ)
       formData.append('images', JSON.stringify(this.vehicleForm.images))
+      formData.append('createdAt', this.vehicleForm.createdAt)
       formData.append('admin', 'true')
       formData.append('userId', '1')
       
@@ -335,6 +342,11 @@ export default {
         this.vehicleForm.images = typeof vehicle.images === 'string' ? JSON.parse(vehicle.images) : vehicle.images
       } else {
         this.vehicleForm.images = []
+      }
+      // 处理日期时间格式，转换为datetime-local格式
+      if (vehicle.createdAt) {
+        const date = new Date(vehicle.createdAt)
+        this.vehicleForm.createdAt = date.toISOString().slice(0, 16)
       }
       this.showAddForm = true
     },

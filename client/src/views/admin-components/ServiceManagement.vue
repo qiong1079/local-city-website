@@ -65,6 +65,10 @@
             <textarea v-model="serviceForm.description" rows="4"></textarea>
           </div>
           <div class="form-item">
+            <label>发布时间</label>
+            <input type="datetime-local" v-model="serviceForm.createdAt">
+          </div>
+          <div class="form-item">
             <label>图片</label>
             <div class="image-upload">
               <div 
@@ -109,6 +113,7 @@
           <th>价格</th>
           <th>所属地区</th>
           <th>联系电话</th>
+          <th>发布时间</th>
           <th>操作</th>
         </tr>
       </thead>
@@ -119,6 +124,7 @@
           <td>{{ service.price }}</td>
           <td>{{ service.region }}</td>
           <td>{{ service.contactPhone }}</td>
+          <td>{{ service.createdAt ? new Date(service.createdAt).toLocaleString() : '' }}</td>
           <td>
             <button @click="editService(service)" class="edit-btn">编辑</button>
             <button @click="deleteService(service.id)" class="delete-btn">删除</button>
@@ -257,6 +263,7 @@ export default {
       formData.append('validity', this.serviceForm.validity)
       formData.append('location', this.serviceForm.location)
       formData.append('images', JSON.stringify(this.serviceForm.images))
+      formData.append('createdAt', this.serviceForm.createdAt)
       formData.append('admin', 'true')
       formData.append('userId', '1')
       
@@ -310,6 +317,11 @@ export default {
         this.serviceForm.images = typeof service.images === 'string' ? JSON.parse(service.images) : service.images
       } else {
         this.serviceForm.images = []
+      }
+      // 处理日期时间格式，转换为datetime-local格式
+      if (service.createdAt) {
+        const date = new Date(service.createdAt)
+        this.serviceForm.createdAt = date.toISOString().slice(0, 16)
       }
       this.showAddForm = true
     },

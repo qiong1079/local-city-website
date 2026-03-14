@@ -93,6 +93,10 @@
             <textarea v-model="houseForm.description" rows="4"></textarea>
           </div>
           <div class="form-item">
+            <label>发布时间</label>
+            <input type="datetime-local" v-model="houseForm.createdAt">
+          </div>
+          <div class="form-item">
             <label>图片</label>
             <div class="image-upload">
               <div 
@@ -138,6 +142,7 @@
           <th>类型</th>
           <th>位置</th>
           <th>联系电话</th>
+          <th>发布时间</th>
           <th>操作</th>
         </tr>
       </thead>
@@ -149,6 +154,7 @@
           <td>{{ house.type }}</td>
           <td>{{ house.location }}</td>
           <td>{{ house.contactPhone }}</td>
+          <td>{{ house.createdAt ? new Date(house.createdAt).toLocaleString() : '' }}</td>
           <td>
             <button @click="editHouse(house)" class="edit-btn">编辑</button>
             <button @click="deleteHouse(house.id)" class="delete-btn">删除</button>
@@ -291,6 +297,7 @@ export default {
       formData.append('contactPhone', this.houseForm.contactPhone)
       formData.append('description', this.houseForm.description)
       formData.append('images', JSON.stringify(this.houseForm.images))
+      formData.append('createdAt', this.houseForm.createdAt)
       formData.append('admin', 'true')
       formData.append('userId', '1')
       
@@ -346,6 +353,11 @@ export default {
         this.houseForm.images = typeof house.images === 'string' ? JSON.parse(house.images) : house.images
       } else {
         this.houseForm.images = []
+      }
+      // 处理日期时间格式，转换为datetime-local格式
+      if (house.createdAt) {
+        const date = new Date(house.createdAt)
+        this.houseForm.createdAt = date.toISOString().slice(0, 16)
       }
       this.showAddForm = true
     },
