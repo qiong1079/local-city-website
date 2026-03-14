@@ -72,3 +72,10 @@ pnpm-lock.yaml
 # 项目特定文件
 query/
 client/package-lock.json
+
+# TypeScript编译产物
+dist/
+*.tsbuildinfo
+
+# 后端TypeScript文件
+server.ts
