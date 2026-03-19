@@ -78,17 +78,20 @@
         
         <!-- 协议内容 -->
         <div class="agreement-content">
-          <p>2. 用户应当在适当的栏目或地区发布信息，所发布信息内容必须真实可靠，不得违反烟台日开智能技术有限公司对发布信息的禁止规定。用户对其自行发表、上传或传送的内容负全部责任。</p>
-          <p>3. 用户不得发布含有下列内容之一的信息：</p>
-          <p>（1）反对宪法所确定的基本原则的；</p>
-          <p>（2）危害国家安全，泄露国家秘密，颠覆国家政权，破坏国家统一的；</p>
-          <p>（3）损害国家荣誉和利益的；</p>
-          <p>（4）煽动民族仇恨、民族歧视，破坏民族团结的；</p>
-          <p>（5）破坏国家宗教政策，宣扬邪教和封建迷信的；</p>
-          <p>（6）散布谣言，扰乱社会秩序，破坏社会稳定的；</p>
-          <p>（7）散布淫秽、色情、赌博、暴力、凶杀、恐怖或者教唆犯罪的；</p>
-          <p>（8）侮辱或者诽谤他人，侵害他人合法权益的；</p>
-          <p>（9）含有法律、行政法规禁止的其他内容的。</p>
+          <div v-if="agreementContent" v-html="agreementContent"></div>
+          <div v-else>
+            <p>2. 用户应当在适当的栏目或地区发布信息，所发布信息内容必须真实可靠，不得违反{{ companyName }}对发布信息的禁止规定。用户对其自行发表、上传或传送的内容负全部责任。</p>
+            <p>3. 用户不得发布含有下列内容之一的信息：</p>
+            <p>（1）反对宪法所确定的基本原则的；</p>
+            <p>（2）危害国家安全，泄露国家秘密，颠覆国家政权，破坏国家统一的；</p>
+            <p>（3）损害国家荣誉和利益的；</p>
+            <p>（4）煽动民族仇恨、民族歧视，破坏民族团结的；</p>
+            <p>（5）破坏国家宗教政策，宣扬邪教和封建迷信的；</p>
+            <p>（6）散布谣言，扰乱社会秩序，破坏社会稳定的；</p>
+            <p>（7）散布淫秽、色情、赌博、暴力、凶杀、恐怖或者教唆犯罪的；</p>
+            <p>（8）侮辱或者诽谤他人，侵害他人合法权益的；</p>
+            <p>（9）含有法律、行政法规禁止的其他内容的。</p>
+          </div>
         </div>
       </div>
     </div>
@@ -112,13 +115,44 @@ export default {
       },
       passwordStrength: '0%',
       passwordColor: '#dc3545',
-      captchaCode: ''
+      captchaCode: '',
+      companyName: '烟台日开智能技术有限公司', // 默认值，将从数据库获取
+      agreementContent: '' // 用户服务协议内容，将从数据库获取
     }
   },
   mounted() {
     this.refreshCaptcha();
+    this.fetchCompanyName();
+    this.fetchAgreementContent();
   },
   methods: {
+    async fetchCompanyName() {
+      try {
+        const response = await fetch('/api/website-settings/contact');
+        if (response.ok) {
+          const setting = await response.json();
+          if (setting && setting.title) {
+            this.companyName = setting.title;
+          }
+        }
+      } catch (error) {
+        console.error('获取公司名失败:', error);
+      }
+    },
+    async fetchAgreementContent() {
+      try {
+        const response = await fetch('/api/website-settings/siteInfo');
+        if (response.ok) {
+          const setting = await response.json();
+          if (setting && setting.content) {
+            this.agreementContent = setting.content;
+          }
+        }
+      } catch (error) {
+        console.error('获取用户服务协议失败:', error);
+      }
+    },
+
     checkPasswordStrength() {
       const password = this.form.password;
       let strength = 0;

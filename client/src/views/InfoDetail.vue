@@ -240,7 +240,7 @@
             <!-- 防骗提示 -->
             <div class="warning-section">
               <div class="warning-content">
-                <p>⚠️ 烟台日开智能技术有限公司提醒您：</p>
+                <p>⚠️ {{ companyName }}提醒您：</p>
                 <p>1. 让你提前汇款，或者价格明显低于市价，均有骗子嫌疑，不要轻易相信。</p>
                 <p>2. 要求先付定金、押金、手续费等费用的信息，需谨慎对待。</p>
                 <p>3. 不要将个人身份证、银行卡等信息透露给陌生人。</p>
@@ -352,7 +352,8 @@ export default {
       showPhone: false,
       recommendItems: [],
       category: 'house',
-      loading: true
+      loading: true,
+      companyName: '烟台日开智能技术有限公司' // 默认值，将从数据库获取
     }
   },
   computed: {
@@ -376,25 +377,37 @@ export default {
       this.category = category;
       this.fetchInfo(id);
       this.fetchRecommendations();
-    }
-  },
-  watch: {
-    // 监听路由参数变化，当参数变化时重新获取数据
-    '$route.params': {
-      handler(newParams, oldParams) {
-        const { category, id } = newParams;
-        if (category && id) {
-          // 滚动到页面顶部
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          this.category = category;
-          this.fetchInfo(id);
-          this.fetchRecommendations();
-        }
-      },
-      deep: true
+      this.fetchCompanyName();
     }
   },
   methods: {
+    fetchCompanyName() {
+      try {
+        console.log('开始获取公司名...');
+        fetch('/api/website-settings/contact')
+          .then(response => {
+            console.log('API响应状态:', response.status);
+            if (response.ok) {
+              return response.json();
+            }
+            throw new Error('API请求失败');
+          })
+          .then(setting => {
+            console.log('获取到的设置:', setting);
+            if (setting && setting.title) {
+              console.log('更新公司名为:', setting.title);
+              this.companyName = setting.title;
+            } else {
+              console.log('未获取到公司名，使用默认值');
+            }
+          })
+          .catch(error => {
+            console.error('获取公司名失败:', error);
+          });
+      } catch (error) {
+        console.error('获取公司名失败:', error);
+      }
+    },
     formatDate(dateString) {
       const date = new Date(dateString);
       return date.toLocaleString('zh-CN');
@@ -569,6 +582,22 @@ export default {
         // 使用默认数据
         this.recommendItems = [];
       }
+    }
+  },
+  watch: {
+    // 监听路由参数变化，当参数变化时重新获取数据
+    '$route.params': {
+      handler(newParams, oldParams) {
+        const { category, id } = newParams;
+        if (category && id) {
+          // 滚动到页面顶部
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          this.category = category;
+          this.fetchInfo(id);
+          this.fetchRecommendations();
+        }
+      },
+      deep: true
     }
   }
 }

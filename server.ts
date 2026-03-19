@@ -486,6 +486,37 @@ async function initDatabase(): Promise<boolean> {
       console.log('✅ 管理员账户初始化成功');
     }
     
+    // 初始化网站设置
+    // 联系我们设置（用于获取公司名）
+    const contact = await global.WebsiteSettings.findOne({ where: { type: 'contact' } });
+    if (!contact) {
+      await global.WebsiteSettings.create({
+        type: 'contact',
+        title: '烟台日开智能技术有限公司',
+        content: '联系我们的详细信息',
+        phone: '13800138000',
+        email: 'contact@example.com',
+        address: '山东省烟台市'
+      });
+      console.log('✅ 联系我们设置初始化成功');
+    }
+    
+    // 网站信息设置（用于获取用户服务协议）
+    const siteInfo = await global.WebsiteSettings.findOne({ where: { type: 'siteInfo' } });
+    if (!siteInfo) {
+      await global.WebsiteSettings.create({
+        type: 'siteInfo',
+        title: '网站信息',
+        companyName: '烟台日开智能技术有限公司',
+        content: '<p>1. 欢迎您注册成为本网站会员，使用本网站提供的各项服务。</p><p>2. 用户应当在适当的栏目或地区发布信息，所发布信息内容必须真实可靠，不得违反烟台日开智能技术有限公司对发布信息的禁止规定。用户对其自行发表、上传或传送的内容负全部责任。</p><p>3. 用户不得发布含有下列内容之一的信息：</p><p>（1）反对宪法所确定的基本原则的；</p><p>（2）危害国家安全，泄露国家秘密，颠覆国家政权，破坏国家统一的；</p><p>（3）损害国家荣誉和利益的；</p><p>（4）煽动民族仇恨、民族歧视，破坏民族团结的；</p><p>（5）破坏国家宗教政策，宣扬邪教和封建迷信的；</p><p>（6）散布谣言，扰乱社会秩序，破坏社会稳定的；</p><p>（7）散布淫秽、色情、赌博、暴力、凶杀、恐怖或者教唆犯罪的；</p><p>（8）侮辱或者诽谤他人，侵害他人合法权益的；</p><p>（9）含有法律、行政法规禁止的其他内容的。</p><p>4. 遵守中华人民共和国相关法律法规，包括但不限于《中华人民共和国计算机信息系统安全保护条例》、《计算机软件保护条例》、《最高人民法院关于审理利用信息网络侵害人身权益民事纠纷案件适用法律若干问题的规定》等。</p>',
+        phone: '13800138000',
+        email: 'contact@example.com',
+        address: '山东省烟台市',
+        icpNumber: '鲁ICP备12345678号'
+      });
+      console.log('✅ 网站信息设置初始化成功');
+    }
+    
     console.log('✅ 数据库初始化完成');
     return true;
   } catch (err) {
@@ -1422,6 +1453,16 @@ app.delete('/api/website-settings/:id', async (req: Request, res: Response) => {
   try {
     await global.WebsiteSettings.destroy({ where: { id: req.params.id } });
     res.json({ message: '删除成功' });
+  } catch (err) {
+    res.status(500).json({ message: (err as Error).message });
+  }
+});
+
+// 测试API - 检查网站设置
+app.get('/api/test/website-settings', async (req: Request, res: Response) => {
+  try {
+    const settings = await global.WebsiteSettings.findAll();
+    res.json({ settings, message: '网站设置获取成功' });
   } catch (err) {
     res.status(500).json({ message: (err as Error).message });
   }
